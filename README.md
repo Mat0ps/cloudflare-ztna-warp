@@ -323,8 +323,6 @@ resource "aws_security_group_rule" "custom_rule" {
 - [Terragrunt Configuration](./terragrunt.hcl)
 - [User Data Script](./user_data/user_data.sh)
 
-## 🏢 Enterprise Features
-
 ### Multi-Environment Support
 - Environment-specific configurations through Terragrunt
 - Separate tunnels per environment (dev/staging/prod)
