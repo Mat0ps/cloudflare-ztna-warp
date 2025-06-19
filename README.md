@@ -1,4 +1,4 @@
-# Cloudflare Zero Trust Network Access (ZTNA) with WARP
+# Cloudflare ZTNA with WARP
 
 <div align="center">
 
