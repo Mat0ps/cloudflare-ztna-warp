@@ -308,6 +308,59 @@ resource "aws_security_group_rule" "custom_rule" {
 }
 ```
 
+## 🔄 Resources Created
+
+This module creates the following AWS and Cloudflare resources:
+
+### Cloudflare Resources
+- **Zero Trust Tunnel**: Main tunnel for secure connectivity
+- **Tunnel Configuration**: WARP routing enabled configuration
+- **Private Network Route**: Route for VPC CIDR block
+- **Tunnel Token**: Authentication token for cloudflared daemon
+
+### AWS Resources  
+- **EC2 Instance**: Ubuntu jump host with cloudflared daemon
+- **Security Group**: Minimal ingress rules (SSH only)
+- **IAM Role**: Service role for EC2 instance
+- **IAM Policy**: Secrets Manager access permissions
+- **IAM Instance Profile**: Role attachment for EC2
+- **Key Pair**: SSH key pair for instance access
+- **Secrets Manager Secrets**: Tunnel token and SSH private key storage
+
+## ⚙️ Requirements
+
+### Software Requirements
+- **Terraform** >= 1.0
+- **Terragrunt** >= 0.38.0 (if using Terragrunt)
+- **AWS CLI** configured with appropriate permissions
+- **Cloudflare account** with Zero Trust enabled
+
+### Permissions Required
+
+#### AWS IAM Permissions
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:*",
+        "iam:*",
+        "secretsmanager:*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+#### Cloudflare API Token Permissions
+- **Zone:Read** - Access to zone information
+- **Account:Read** - Access to account details  
+- **Cloudflare Tunnel:Edit** - Create and manage tunnels
+- **Access:Edit** - Configure Zero Trust policies
+
 ## 📚 Documentation
 
 ### Official Documentation
@@ -340,3 +393,68 @@ resource "aws_security_group_rule" "custom_rule" {
 - Use t3.micro instances for basic routing needs
 - Scale instance size based on throughput requirements
 - Leverage Cloudflare's global infrastructure for performance
+
+## 🛡️ Security Considerations
+
+### Best Practices
+- **Tunnel Token Security**: Tokens are stored encrypted in AWS Secrets Manager
+- **SSH Key Management**: Private keys are auto-generated and stored securely
+- **Network Isolation**: Jump host only allows SSH access from anywhere
+- **IAM Least Privilege**: Instance role has minimal required permissions
+- **Zero Trust Access**: All traffic goes through Cloudflare's security policies
+
+### Recommended Configurations
+- Enable MFA for Cloudflare Zero Trust dashboard access
+- Configure device enrollment policies for WARP clients
+- Set up network policies to restrict access to specific resources
+- Enable audit logging for all tunnel traffic
+- Regularly rotate tunnel tokens and SSH keys
+
+## 🚀 Deployment Instructions
+
+### Step-by-Step Deployment
+
+1. **Prerequisites Setup:**
+   ```bash
+   # Ensure AWS CLI is configured
+   aws configure list
+   
+   # Verify Cloudflare account access
+   curl -X GET "https://api.cloudflare.com/client/v4/user/tokens/verify" \
+        -H "Authorization: Bearer YOUR_TOKEN"
+   ```
+
+2. **Deploy VPC (if not exists):**
+   ```bash
+   cd ../vpc
+   terragrunt apply
+   ```
+
+3. **Configure Variables:**
+   Create `terraform.tfvars` or update Terragrunt configuration with your values.
+
+4. **Deploy Infrastructure:**
+   ```bash
+   # Using Terragrunt
+   terragrunt plan
+   terragrunt apply
+   
+   # Using Terraform
+   terraform init
+   terraform plan
+   terraform apply
+   ```
+
+5. **Verify Deployment:**
+   ```bash
+   # Check tunnel status
+   terragrunt output tunnel_id
+   
+   # Verify jump host is running
+   aws ec2 describe-instances --filters "Name=tag:Name,Values=*cloudflare-routing-host*"
+   ```
+
+6. **Configure WARP Client:**
+   - Install WARP client on your device
+   - Enroll device to your Zero Trust organization
+   - Verify private network access
